@@ -1,0 +1,175 @@
+{{assign "show_announcement" false}}
+{{assign "should_display_with_slider_ids" (JSONparse '["2", "3", "4"]')}}
+{{assign "should_display_with_slider" false}}
+{{assign "cyclic_scroll" (if section.settings.display_mode == "5")}}
+
+{{#if should_display_with_slider_ids contains section.settings.display_mode}}
+  {{assign "should_display_with_slider" true}}
+{{/if}}
+
+{{#for section.blocks as |block|}}
+  {{#if (trim block.settings.notice_link_text)}}
+    {{assign "show_announcement" true}}
+  {{/if}}
+{{/for}}
+
+{{snippet "stylesheet" href=(asset_url "section-announcement-bar.css")}}
+
+{{#if show_announcement and section.settings.enable_sticky}}
+  <script src="{{asset_url 'section-announcement-bar-sticky-top.js'}}" defer></script>
+{{/if}}
+
+{{#if should_display_with_slider}}
+  {{snippet "stylesheet" href=(asset_url "lib-splide.min.css")}}
+  <script src="{{asset_url 'lib-splide.min.js'}}" defer></script>
+  <script src="{{asset_url 'section-announcement-bar-slider.js'}}" defer></script>
+{{/if}}
+
+{{#if cyclic_scroll}}
+  {{stylesheet_tag (asset_url "cyclic-scroll.css")}}
+  <script src="{{asset_url 'cyclic-scroll.js'}}" defer></script>
+{{/if}}
+
+{{#if request.design_mode}}
+  <script src="{{asset_url 'theme-editor.js'}}" defer="defer"></script>
+{{/if}}
+
+{{#if show_announcement}}
+  {{#if cyclic_scroll}}
+    <cyclic-scroll 
+      style="
+        --scroll-speed-pc: {{section.settings.pc_scroll_interval}}s;
+        --scroll-speed-mb: {{section.settings.mb_scroll_interval}}s;
+      "
+    >
+  {{/if}}
+  {{#if should_display_with_slider}}<announcement-bar-slider
+      data-display-mode="{{section.settings.display_mode}}"
+    >{{/if}}
+  {{#if section.settings.enable_sticky}}<announcement-bar-sticky-top>{{/if}}
+  <div class="announcement-bar--container 
+    {{#if should_display_with_slider}}splide{{/if}}
+    {{#if cyclic_scroll}}cyclic-scroll__container cyclic-scroll-stop{{/if}}"
+  >
+    {{#if should_display_with_slider}}
+      <div class="splide__track">
+    {{/if}}
+    <div class="announcement-bar--list 
+      {{#if should_display_with_slider}}splide__list{{/if}} 
+      {{#if cyclic_scroll}}cyclic-scroll__inner{{/if}}"
+    >
+      {{#for section.blocks as |block|}}
+        {{~#if (isTruthy block.settings.notice_link_text)}}
+          <div
+            class="announcement-bar--item
+              {{#if cyclic_scroll}}
+                cyclic-scroll__item
+              {{else}}
+                color-scheme-{{block.settings.notice_style}}
+              {{/if}}
+              {{#if should_display_with_slider}}splide__slide{{/if}}"
+            {{{block.shopline_attributes}}}
+          >
+            {{assign "ele" (ternary (if block.settings.notice_link) "a" "div")}}
+            <{{ele}}
+              {{#if block.settings.notice_link}}href="{{block.settings.notice_link}}"{{/if}}
+              class="body4 announcement--text"
+            >
+              {{~block.settings.notice_link_text~}}
+            </{{ele}}>
+          </div>
+        {{~/if}}
+      {{/for}}
+    </div>
+    {{#if should_display_with_slider}}
+      </div>
+    {{/if}}
+  </div>
+  {{#if section.settings.enable_sticky}}</announcement-bar-sticky-top>{{/if}}
+  {{#if should_display_with_slider}}</announcement-bar-slider>{{/if}}
+  {{#if cyclic_scroll}}</cyclic-scroll>{{/if}}
+{{/if}}
+
+{{#schema}}
+{
+  "name": "t:sections.announcement-bar.name",
+  "max_blocks": 12,
+  "settings": [
+    {
+      "type": "switch",
+      "id": "enable_sticky",
+      "default": false,
+      "label": "t:sections.announcement-bar.settings.enable_sticky.label"
+    },
+    {
+      "id": "display_mode",
+      "type": "select",
+      "label": "t:sections.announcement-bar.settings.display_mode.label",
+      "default": "1",
+      "options": [
+        {
+          "value": "1",
+          "label": "t:sections.announcement-bar.settings.display_mode.options__0.label"
+        },
+        {
+          "value": "2",
+          "label": "t:sections.announcement-bar.settings.display_mode.options__1.label"
+        },
+        {
+          "value": "3",
+          "label": "t:sections.announcement-bar.settings.display_mode.options__2.label"
+        },
+        {
+          "value": "4",
+          "label": "t:sections.announcement-bar.settings.display_mode.options__3.label"
+        },
+        {
+          "value": "5",
+          "label": "t:sections.announcement-bar.settings.display_mode.options__4.label"
+        }
+      ]
+    },
+    {
+      "id": "pc_scroll_interval",
+      "type": "range",
+      "label": "t:sections.announcement-bar.settings.pc_scroll_interval.label",
+      "default": 12,
+      "unit": "s",
+      "min": 5,
+      "max": 20,
+      "step": 1,
+      "info": "t:sections.announcement-bar.settings.pc_scroll_interval.info"
+    },
+    {
+      "id": "mb_scroll_interval",
+      "type": "range",
+      "label": "t:sections.announcement-bar.settings.mb_scroll_interval.label",
+      "default": 5,
+      "unit": "s",
+      "min": 3,
+      "max": 20,
+      "step": 1
+    }
+  ],
+  "blocks": [
+    {
+      "type": "item",
+      "icon": "normal",
+      "name": "t:sections.announcement-bar.blocks.item.name",
+      "settings": [
+        {
+          "id": "notice_link_text",
+          "type": "text",
+          "label": "t:sections.announcement-bar.blocks.item.settings.notice_link_text.label",
+          "default": "30-day postage paid returns"
+        },
+        {
+          "type": "url",
+          "id": "notice_link",
+          "label": "t:sections.announcement-bar.blocks.item.settings.notice_link.label"
+        }
+      ]
+    }
+  ]
+}
+{{/schema}}
